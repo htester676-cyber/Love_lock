@@ -136,43 +136,32 @@ export function MemoryGame() {
   );
 }
 
-const SPIN_DARES = ["Kiss 💋", "Hug 🤗", "Compliment 💬", "Massage 💆", "Cook for me 🍳", "Love note 💌", "Dance 💃", "Sing 🎵"];
+const NEVER_HAVE_I_EVER = [
+  "Never have I ever pretended to be asleep to avoid talking to you.",
+  "Never have I ever secretly worn your clothes.",
+  "Never have I ever been jealous of one of your friends.",
+  "Never have I ever snooped through your phone.",
+  "Never have I ever forgotten an important anniversary.",
+  "Never have I ever lied about liking a gift you gave me.",
+  "Never have I ever imagined what our kids would look like.",
+];
 
-export function SpinBottle() {
-  const [spinning, setSpinning] = useState(false);
-  const [deg, setDeg] = useState(0);
-  const [result, setResult] = useState(null);
-  const spin = () => {
-    if (spinning) return;
-    setSpinning(true);
-    const extra = 1440 + Math.floor(Math.random() * 360);
-    const newDeg = deg + extra;
-    setDeg(newDeg);
-    // Needle is at top (0°). Wheel rotates clockwise by newDeg.
-    // The segment at the top after rotation is at angle (360 - newDeg % 360) % 360
-    const segmentAngle = 360 / SPIN_DARES.length; // 45° per segment
-    const pointerAngle = ((360 - (newDeg % 360)) % 360 + segmentAngle / 2) % 360;
-    const idx = Math.floor(pointerAngle / segmentAngle);
-    setTimeout(() => { setResult(SPIN_DARES[idx % SPIN_DARES.length]); setSpinning(false); }, 2500);
-  };
+export function NeverHaveIEver() {
+  const [idx, setIdx] = useState(0);
+  const q = NEVER_HAVE_I_EVER[idx % NEVER_HAVE_I_EVER.length];
+
+  const next = () => { setIdx(i => i + 1); };
+
   return (
-    <div className="spin-wrap">
-      <div className="spin-wheel" onClick={spin}>
-        <div className="spin-needle">💘</div>
-        <div className="spin-circle" style={{ transform: `rotate(${deg}deg)`, transition: spinning ? "transform 2.5s cubic-bezier(0.17,0.67,0.3,1)" : "none" }}>
-          {SPIN_DARES.map((d, i) => (
-            <div key={i} style={{ position: "absolute", transform: `rotate(${(i / SPIN_DARES.length) * 360}deg) translate(60px)`, fontSize: "0.65rem", color: "rgba(245,230,234,0.6)", whiteSpace: "nowrap" }}>{d}</div>
-          ))}
-          <div style={{ fontSize: "2rem" }}>🍾</div>
-        </div>
+    <div className="nhie-wrap">
+      <div className="nhie-card">
+        <p className="nhie-text">"{q}"</p>
       </div>
-      <button className="btn" onClick={spin} disabled={spinning}>{spinning ? "Spinning... 🌀" : "Spin! 💫"}</button>
-      {result && !spinning && (
-        <div className="spin-result">
-          <p style={{ color: "rgba(245,230,234,0.5)", fontSize: "0.75rem", marginBottom: 6 }}>Your challenge:</p>
-          <p style={{ fontSize: "1.2rem", color: "#fff", fontFamily: "Playfair Display, serif", fontStyle: "italic" }}>{result}</p>
-        </div>
-      )}
+      <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginBottom: "20px" }}>
+        <button className="btn" style={{ background: "rgba(100,200,120,0.2)", border: "1px solid rgba(100,200,120,0.5)", color: "#90e0a0" }} onClick={next}>I Have 🙋</button>
+        <button className="btn" style={{ background: "rgba(240,80,80,0.2)", border: "1px solid rgba(240,80,80,0.5)", color: "#f08080" }} onClick={next}>I Haven't 🙅</button>
+      </div>
+      <button className="btn btn-ghost" onClick={next}>Next Question →</button>
     </div>
   );
 }
