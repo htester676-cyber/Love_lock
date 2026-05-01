@@ -1,34 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { setMusic, onMusic } from './firebase';
 
-// Curated Tamil + Hindi + English love songs (YouTube video IDs)
 const PLAYLISTS = {
-  tamil: [
-    { title: "Kannazhaga", artist: "Dhanush - 3 Movie", videoId: "HpJEWpXsqOs" },
-    { title: "Ennai Nokki Paayum Thotta", artist: "Dhanush", videoId: "jqMGYH5jKhI" },
-    { title: "Moongil Thottam", artist: "Kadal - AR Rahman", videoId: "tVS2XDkw_5M" },
-    { title: "Nenjukkul Peidhidum", artist: "Vaaranam Aayiram - Harris Jayaraj", videoId: "EhfRsx3tXFw" },
-    { title: "Munbe Vaa", artist: "Sillunu Oru Kaadhal - AR Rahman", videoId: "gMZ_wGaRbXE" },
-    { title: "Idhazhin Oram", artist: "3 Movie - Anirudh", videoId: "wmq5gFEbquo" },
-    { title: "Kaatru Veliyidai", artist: "AR Rahman", videoId: "3PsAIlmNdag" },
-    { title: "Un Mela", artist: "VTV - AR Rahman", videoId: "n0h7gA2TR9o" },
-    { title: "Oru Naal Koothu Paatu", artist: "Tamil Melody", videoId: "9rGYk1IQ8SE" },
-    { title: "Thaeme Thaeme", artist: "Mersal - AR Rahman", videoId: "NqM9KfCBBHQ" },
-  ],
-  hindi: [
-    { title: "Tum Hi Ho", artist: "Aashiqui 2 - Arijit Singh", videoId: "IJq0yyWug1k" },
-    { title: "Raabta", artist: "Agent Vinod - Arijit Singh", videoId: "m-44zjh0cPw" },
-    { title: "Tera Ban Jaunga", artist: "Kabir Singh - Akhil Sachdeva", videoId: "93vW1uaEYgE" },
-    { title: "Hawayein", artist: "Jab Harry Met Sejal - Arijit", videoId: "cYOB941gyXI" },
-    { title: "Channa Mereya", artist: "ADHM - Arijit Singh", videoId: "284Ov7ysmfA" },
-  ],
-  english: [
-    { title: "Perfect", artist: "Ed Sheeran", videoId: "2Vv-BfVoq4g" },
-    { title: "All of Me", artist: "John Legend", videoId: "450p7goxZqg" },
-    { title: "A Thousand Years", artist: "Christina Perri", videoId: "rtOvBOTyX00" },
-    { title: "Thinking Out Loud", artist: "Ed Sheeran", videoId: "lp-EO5I60KA" },
-    { title: "Say You Won't Let Go", artist: "James Arthur", videoId: "0yW7w8F2TVA" },
-  ]
+  tamil: [],
+  hindi: [],
+  english: []
 };
 
 export function MusicPlayer({ roomCode }) {
@@ -203,52 +179,7 @@ export function MusicPlayer({ roomCode }) {
 }
 
 // Karaoke component (kept from before)
-const KARAOKE_SONGS = [
-  {
-    title: "Kannazhaga - 3 Movie 🎵",
-    icon: "💕",
-    lyrics: [
-      { text: "Kannazhaga Kaadhal Seidhaai", turn: 1 },
-      { text: "Kannukulle Nee Pugundhaai", turn: 2 },
-      { text: "Ennai Marandhu Pogavillai", turn: 1 },
-      { text: "Unnai Pirindhaal Thaazhvillai", turn: 2 },
-      { text: "Pookal Ellaam Nee Thaanaa", turn: 1 },
-      { text: "Kaatru Koodha Nee Thaanaa", turn: 2 },
-      { text: "Kannazhaga Kaadhal Seidhaai", turn: 1 },
-      { text: "En Kannukulle Nee Pugundhaai", turn: 2 },
-    ],
-  },
-  {
-    title: "Perfect - Ed Sheeran 🌹",
-    icon: "🌹",
-    lyrics: [
-      { text: "I found a love, for me", turn: 1 },
-      { text: "Darling, just dive right in", turn: 2 },
-      { text: "And follow my lead", turn: 1 },
-      { text: "Well, I found a girl", turn: 2 },
-      { text: "Beautiful and sweet", turn: 1 },
-      { text: "Oh, I never knew you were", turn: 2 },
-      { text: "The someone waiting for me", turn: 1 },
-      { text: "Baby, I'm dancing in the dark", turn: 2 },
-      { text: "With you between my arms", turn: 1 },
-      { text: "Barefoot on the grass", turn: 2 },
-    ],
-  },
-  {
-    title: "Tum Hi Ho - Aashiqui 2 💗",
-    icon: "💗",
-    lyrics: [
-      { text: "Hum tere bin ab reh nahi sakte", turn: 1 },
-      { text: "Tere bina kya wajood mera", turn: 2 },
-      { text: "Tujhse juda agar ho jaayenge", turn: 1 },
-      { text: "Toh khud se hi ho jaayenge judaa", turn: 2 },
-      { text: "Kyunki tum hi ho", turn: 1 },
-      { text: "Ab tum hi ho", turn: 2 },
-      { text: "Zindagi ab tum hi ho", turn: 1 },
-      { text: "Chain bhi mera tum hi ho", turn: 2 },
-    ],
-  },
-];
+const KARAOKE_SONGS = [];
 
 export function Karaoke({ names }) {
   const [selectedSong, setSelectedSong] = useState(null);

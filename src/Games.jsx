@@ -1,29 +1,7 @@
 import { useState } from 'react';
 
-const TRUTHS = [
-  "What's the most romantic thing you've ever done for someone?",
-  "What's one thing about me you've never told me?",
-  "What's your love language and why?",
-  "When did you first realize you had feelings for me?",
-  "What's your biggest relationship fear?",
-  "What's a dream date you've imagined but never told me?",
-  "What quality in me do you love most?",
-  "What's one memory of us you'll never forget?",
-  "What's something you wish I did more often?",
-  "Describe your perfect morning with me.",
-];
-const DARES = [
-  "Sing 10 seconds of a love song for me 🎵",
-  "Write me a haiku right now ✍️",
-  "Give me a 30-second massage 💆",
-  "Say 5 things you love about me out loud",
-  "Do your best impression of me!",
-  "Send a sweet message to each other's parents 📱",
-  "Slow dance together for 60 seconds 💃",
-  "Take a cute photo together 📸",
-  "Make a promise you'll keep for a week",
-  "Cook or order my favorite meal tonight 🍜",
-];
+const TRUTHS = [];
+const DARES = [];
 
 export function TruthOrDare() {
   const [card, setCard] = useState(null);
@@ -31,6 +9,10 @@ export function TruthOrDare() {
   const pick = (t) => {
     const list = t === "truth" ? TRUTHS : DARES;
     setType(t);
+    if (list.length === 0) {
+      setCard("No cards added yet.");
+      return;
+    }
     setCard(list[Math.floor(Math.random() * list.length)]);
   };
   return (
@@ -54,19 +36,12 @@ export function TruthOrDare() {
   );
 }
 
-const WYR = [
-  { q: "Would you rather...", a: "Go on an adventure trip 🏔️", b: "Cozy staycation at home 🏠" },
-  { q: "Would you rather...", a: "Read each other's minds 🧠", b: "Feel exactly what each other feels 💓" },
-  { q: "Would you rather...", a: "Always laugh together 😂", b: "Always understand each other 🤝" },
-  { q: "Would you rather...", a: "Meet in childhood 🧒", b: "Meet exactly when you did ✨" },
-  { q: "Would you rather...", a: "Travel every month ✈️", b: "Build a dream home 🏡" },
-  { q: "Would you rather...", a: "Never argue again 🕊️", b: "Always make up quickly 💋" },
-];
+const WYR = [];
 
 export function WouldYouRather() {
   const [idx, setIdx] = useState(0);
   const [chosen, setChosen] = useState({ a: false, b: false });
-  const q = WYR[idx % WYR.length];
+  const q = WYR.length > 0 ? WYR[idx % WYR.length] : { q: "No questions added", a: "-", b: "-" };
   const next = () => { setIdx(i => i + 1); setChosen({ a: false, b: false }); };
   return (
     <div>
@@ -136,19 +111,11 @@ export function MemoryGame() {
   );
 }
 
-const NEVER_HAVE_I_EVER = [
-  "Never have I ever pretended to be asleep to avoid talking to you.",
-  "Never have I ever secretly worn your clothes.",
-  "Never have I ever been jealous of one of your friends.",
-  "Never have I ever snooped through your phone.",
-  "Never have I ever forgotten an important anniversary.",
-  "Never have I ever lied about liking a gift you gave me.",
-  "Never have I ever imagined what our kids would look like.",
-];
+const NEVER_HAVE_I_EVER = [];
 
 export function NeverHaveIEver() {
   const [idx, setIdx] = useState(0);
-  const q = NEVER_HAVE_I_EVER[idx % NEVER_HAVE_I_EVER.length];
+  const q = NEVER_HAVE_I_EVER.length > 0 ? NEVER_HAVE_I_EVER[idx % NEVER_HAVE_I_EVER.length] : "No questions added";
 
   const next = () => { setIdx(i => i + 1); };
 
@@ -166,20 +133,15 @@ export function NeverHaveIEver() {
   );
 }
 
-const DATE_IDEAS = [
-  { icon: "🌅", name: "Sunrise Picnic", sub: "Pack breakfast & watch sunrise" },
-  { icon: "🎨", name: "Paint Night", sub: "Paint each other's portraits" },
-  { icon: "🎬", name: "Movie Marathon", sub: "Old favourites & blankets" },
-  { icon: "🍳", name: "Cooking Challenge", sub: "Cook a new cuisine together" },
-  { icon: "⭐", name: "Stargazing", sub: "Night sky & hot chocolate" },
-  { icon: "📸", name: "Photo Walk", sub: "Capture a day in your city" },
-  { icon: "🎮", name: "Game Night", sub: "Board games or video games" },
-  { icon: "💌", name: "Letter Exchange", sub: "Write letters, swap & read" },
-];
+const DATE_IDEAS = [];
 
 export function DateIdeas() {
   const [picked, setPicked] = useState(null);
-  const random = () => setPicked(DATE_IDEAS[Math.floor(Math.random() * DATE_IDEAS.length)]);
+  const random = () => {
+    if (DATE_IDEAS.length > 0) {
+      setPicked(DATE_IDEAS[Math.floor(Math.random() * DATE_IDEAS.length)]);
+    }
+  };
   return (
     <div>
       <button className="btn" style={{ marginBottom: 16 }} onClick={random}>🎲 Surprise Me!</button>
@@ -200,19 +162,14 @@ export function DateIdeas() {
   );
 }
 
-const QUIZ_Q = [
-  { q: "What's my favourite colour?", opts: ["Red", "Blue", "Pink", "Green"] },
-  { q: "Where would I most love to travel?", opts: ["Paris", "Tokyo", "Maldives", "New York"] },
-  { q: "What's my love language?", opts: ["Words of Affirmation", "Physical Touch", "Quality Time", "Acts of Service"] },
-  { q: "What food could I eat every day?", opts: ["Pizza", "Sushi", "Biryani", "Pasta"] },
-];
+const QUIZ_Q = [];
 
 export function CoupleQuiz() {
   const [qi, setQi] = useState(0);
   const [score, setScore] = useState(0);
   const [chosen, setChosen] = useState(null);
   const [done, setDone] = useState(false);
-  const q = QUIZ_Q[qi];
+  const q = QUIZ_Q.length > 0 ? QUIZ_Q[qi] : { q: "No questions added", opts: [] };
   const answer = (opt) => {
     if (chosen) return;
     setChosen(opt);
@@ -247,7 +204,7 @@ export function CoupleQuiz() {
 
 export function Confessions() {
   const [text, setText] = useState("");
-  const [list, setList] = useState(["I smile every time I see your name on my phone 📱", "I saved our first chat screenshot still 💌"]);
+  const [list, setList] = useState([]);
   const add = () => { if (!text.trim()) return; setList(l => [text.trim(), ...l]); setText(""); };
   return (
     <div>
