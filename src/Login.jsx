@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createRoom, joinRoom, generateRoomCode, auth, googleProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from './firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, updateProfile } from 'firebase/auth';
 
 export default function Login({ onLogin }) {
   const [mode, setMode] = useState(null); // null, 'create', 'join'
@@ -14,6 +14,7 @@ export default function Login({ onLogin }) {
   // Email Auth State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [nickname, setNickname] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
 
   useEffect(() => {
@@ -40,11 +41,17 @@ export default function Login({ onLogin }) {
       setError('Please enter both email and password.');
       return;
     }
+    if (isSignUp && !nickname.trim()) {
+      setError('Please enter a nickname.');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
       if (isSignUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: nickname.trim() });
+        setName(nickname.trim());
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
@@ -59,6 +66,7 @@ export default function Login({ onLogin }) {
       await signOut(auth);
       setMode(null);
       setError('');
+      setName('');
     } catch (e) {
       setError('Could not sign out.');
     }
@@ -70,6 +78,12 @@ export default function Login({ onLogin }) {
     try {
       const roomCode = generateRoomCode();
       await createRoom(roomCode, name.trim());
+      
+      // If user changed their name here, optionally update profile:
+      if (authUser && name.trim() !== authUser.displayName) {
+        await updateProfile(authUser, { displayName: name.trim() }).catch(()=>console.log('Profile update skipped'));
+      }
+      
       onLogin({ name: name.trim(), code: roomCode, role: 'host', uid: authUser?.uid });
     } catch (e) {
       setError('Could not create room. Check Firebase config.');
@@ -84,6 +98,12 @@ export default function Login({ onLogin }) {
     try {
       const room = await joinRoom(code.trim(), name.trim());
       if (!room) { setError('Room not found! Check the code.'); setLoading(false); return; }
+      
+      // If user changed their name here, optionally update profile:
+      if (authUser && name.trim() !== authUser.displayName) {
+        await updateProfile(authUser, { displayName: name.trim() }).catch(()=>console.log('Profile update skipped'));
+      }
+      
       onLogin({ name: name.trim(), code: code.trim(), role: 'guest', uid: authUser?.uid });
     } catch (e) {
       setError('Could not join room. Check your connection.');
@@ -113,6 +133,16 @@ export default function Login({ onLogin }) {
         {!authUser ? (
           <div className="login-actions" style={{ marginTop: '20px' }}>
             <form onSubmit={handleEmailAuth} className="login-form">
+              {isSignUp && (
+                <input
+                  type="text"
+                  className="login-input"
+                  placeholder="Your Nickname"
+                  value={nickname}
+                  onChange={e => { setNickname(e.target.value); setError(''); }}
+                  maxLength={20}
+                />
+              )}
               <input
                 type="email"
                 className="login-input"
@@ -168,7 +198,7 @@ export default function Login({ onLogin }) {
               <div className="login-form">
                 <input
                   className="login-input"
-                  placeholder="Your name..."
+                  placeholder="Your nickname..."
                   value={name}
                   onChange={e => { setName(e.target.value); setError(''); }}
                   maxLength={20}
