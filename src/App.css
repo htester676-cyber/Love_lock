@@ -317,3 +317,49 @@ body { font-family: 'DM Sans', sans-serif; background: #1a0a0f; overflow-x: hidd
   letter-spacing:8px;
   text-shadow:0 0 30px rgba(240,96,144,0.3);
 }
+
+/* NEVER HAVE I EVER */
+.nhie-wrap {
+  text-align: center;
+}
+.nhie-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(240,96,144,0.2);
+  border-radius: 20px;
+  padding: 30px 20px;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.nhie-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  font-style: italic;
+  color: #fff;
+}
+
+/* TOAST */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.toast {
+  background: rgba(240,96,144,0.9);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  animation: slideInRight 0.3s ease-out;
+  font-size: 0.9rem;
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}

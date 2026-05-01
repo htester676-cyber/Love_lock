@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
-import { TruthOrDare, WouldYouRather, MemoryGame, SpinBottle, DateIdeas, CoupleQuiz, Confessions } from './Games';
+import { useState, useEffect, useCallback } from 'react';
+import { TruthOrDare, WouldYouRather, MemoryGame, NeverHaveIEver, DateIdeas, CoupleQuiz, Confessions } from './Games';
 import { MusicPlayer, Karaoke } from './Music';
 import { Chat } from './Chat';
 import { DrawingPad } from './DrawingPad';
 import Login from './Login';
-import { onRoomUsers } from './firebase';
+import { onRoomUsers, messaging, getToken, onMessage, db, ref, set } from './firebase';
 
 const GAMES = [
   { id: "tod", icon: "🃏", name: "Truth or Dare", desc: "Spicy couples edition", wide: false },
   { id: "wyr", icon: "💬", name: "Would You Rather", desc: "Reveal your choices", wide: true },
   { id: "memo", icon: "🧠", name: "Memory Match", desc: "Find the pair", wide: false },
-  { id: "spin", icon: "🍾", name: "Spin the Bottle", desc: "Spin for a dare", wide: false },
+  { id: "nhie", icon: "🤭", name: "Never Have I Ever", desc: "Confess your secrets", wide: false },
   { id: "date", icon: "📅", name: "Date Ideas", desc: "Find something fun", wide: true },
   { id: "quiz", icon: "🎯", name: "Couple Quiz", desc: "How well do you know each other?", wide: false },
   { id: "confess", icon: "💌", name: "Confessions", desc: "Leave sweet notes", wide: false },
@@ -21,7 +21,7 @@ const GAME_TITLES = {
   tod: ["Truth or Dare 🃏", "Spicy couples edition"],
   wyr: ["Would You Rather 💬", "Reveal your true choices"],
   memo: ["Memory Match 🧠", "Find all the pairs together"],
-  spin: ["Spin the Bottle 🍾", "Let fate decide!"],
+  nhie: ["Never Have I Ever 🤭", "Let's see what you've done"],
   date: ["Date Ideas 📅", "Inspiration for your next date"],
   quiz: ["Couple Quiz 🎯", "How well do you know each other?"],
   confess: ["Sweet Confessions 💌", "Drop a note for your love"],
@@ -29,20 +29,54 @@ const GAME_TITLES = {
 };
 
 export default function App() {
-  const [user, setUser] = useState(null); // { name, code, role }
+  const [user, setUser] = useState(null); // { name, code, role, uid }
   const [tab, setTab] = useState("games");
   const [activeGame, setActiveGame] = useState(null);
   const [partner, setPartner] = useState(null);
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = useCallback((msg) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, msg }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+  }, []);
 
   // Listen for partner joining
   useEffect(() => {
     if (!user) return;
     const unsub = onRoomUsers(user.code, (users) => {
-      if (user.role === 'host' && users.guest) setPartner(users.guest);
-      if (user.role === 'guest' && users.host) setPartner(users.host);
+      if (user.role === 'host' && users.guest && partner !== users.guest) {
+        setPartner(users.guest);
+        showToast(`${users.guest} joined the room! 💕`);
+      }
+      if (user.role === 'guest' && users.host && partner !== users.host) {
+        setPartner(users.host);
+      }
     });
     return () => unsub();
-  }, [user]);
+  }, [user, partner, showToast]);
+
+  useEffect(() => {
+    if (user && user.uid && messaging) {
+      const requestPushPermission = async () => {
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            const token = await getToken(messaging);
+            if (token) await set(ref(db, `users/${user.uid}/fcmToken`), token);
+          }
+        } catch (e) {
+          console.log('Push notification skipped:', e);
+        }
+      };
+      requestPushPermission();
+
+      const unsub = onMessage(messaging, (payload) => {
+        showToast(`💌 ${payload.notification?.title}: ${payload.notification?.body}`);
+      });
+      return () => unsub();
+    }
+  }, [user, showToast]);
 
   const names = user ? (
     user.role === 'host'
@@ -60,7 +94,7 @@ export default function App() {
       case "tod": return <TruthOrDare />;
       case "wyr": return <WouldYouRather />;
       case "memo": return <MemoryGame />;
-      case "spin": return <SpinBottle />;
+      case "nhie": return <NeverHaveIEver />;
       case "date": return <DateIdeas />;
       case "quiz": return <CoupleQuiz />;
       case "confess": return <Confessions />;
@@ -85,6 +119,9 @@ export default function App() {
 
   return (
     <div className="app">
+      <div className="toast-container">
+        {toasts.map(t => <div key={t.id} className="toast">{t.msg}</div>)}
+      </div>
       <div className="hearts-bg">
         {floatHearts.map((h, i) => (
           <div key={i} className="float-heart" style={{ left: h.left, bottom: "-40px", animationDelay: h.delay, animationDuration: h.duration }}>❤️</div>
