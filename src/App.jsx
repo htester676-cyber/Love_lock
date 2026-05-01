@@ -98,7 +98,13 @@ export default function App() {
     setUser(data);
     localStorage.setItem('lovelock_user', JSON.stringify(data));
   };
-  const handleLogout = () => { 
+  const handleLogout = async () => { 
+    if (user && user.uid) {
+      // Remove from firebase active room
+      await set(ref(db, `users/${user.uid}/activeRoom`), null);
+      // Optional: remove them from the room itself so the partner sees them leave immediately
+      await set(ref(db, `rooms/${user.code}/users/${user.role}`), null);
+    }
     setUser(null); 
     setPartner(null); 
     setTab('games'); 

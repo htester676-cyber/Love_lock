@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createRoom, joinRoom, generateRoomCode, auth, googleProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from './firebase';
+import { createRoom, joinRoom, generateRoomCode, auth, googleProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, db, ref, set, get } from './firebase';
 import { onAuthStateChanged, updateProfile } from 'firebase/auth';
 
 export default function Login({ onLogin }) {
@@ -18,13 +18,34 @@ export default function Login({ onLogin }) {
   const [isSignUp, setIsSignUp] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
+    const unsub = onAuthStateChanged(auth, async (u) => {
       setAuthUser(u);
-      if (u && !name) setName(u.displayName || '');
+      if (u) {
+        setName(prev => prev || u.displayName || '');
+        
+        try {
+          // Check for active room in DB
+          const activeRoomSnap = await get(ref(db, `users/${u.uid}/activeRoom`));
+          if (activeRoomSnap.exists()) {
+            const activeRoom = activeRoomSnap.val();
+            // Verify room still exists
+            const roomSnap = await get(ref(db, `rooms/${activeRoom.code}`));
+            if (roomSnap.exists()) {
+              onLogin({ name: u.displayName || 'User', code: activeRoom.code, role: activeRoom.role, uid: u.uid });
+              return; // Bypass Login completely
+            } else {
+              // Room was deleted, clean up
+              await set(ref(db, `users/${u.uid}/activeRoom`), null);
+            }
+          }
+        } catch (e) {
+          console.error("Error checking active room:", e);
+        }
+      }
       setAuthLoading(false);
     });
     return () => unsub();
-  }, [name]);
+  }, [onLogin]);
 
   const handleGoogleLogin = async () => {
     setError('');
@@ -79,6 +100,11 @@ export default function Login({ onLogin }) {
       const roomCode = generateRoomCode();
       await createRoom(roomCode, name.trim());
       
+      // Save active room to user's profile
+      if (authUser) {
+        await set(ref(db, `users/${authUser.uid}/activeRoom`), { code: roomCode, role: 'host' });
+      }
+      
       // If user changed their name here, optionally update profile:
       if (authUser && name.trim() !== authUser.displayName) {
         await updateProfile(authUser, { displayName: name.trim() }).catch(()=>console.log('Profile update skipped'));
@@ -98,6 +124,11 @@ export default function Login({ onLogin }) {
     try {
       const room = await joinRoom(code.trim(), name.trim());
       if (!room) { setError('Room not found! Check the code.'); setLoading(false); return; }
+      
+      // Save active room to user's profile
+      if (authUser) {
+        await set(ref(db, `users/${authUser.uid}/activeRoom`), { code: code.trim(), role: 'guest' });
+      }
       
       // If user changed their name here, optionally update profile:
       if (authUser && name.trim() !== authUser.displayName) {
