@@ -7,7 +7,7 @@
 // 5. Copy your config values below
 
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { getDatabase, ref, push, onValue, set, onDisconnect, remove, get } from 'firebase/database';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
@@ -112,4 +112,4 @@ export function onMusic(code, callback) {
   return onValue(ref(db, `rooms/${code}/music`), (snap) => callback(snap.val()));
 }
 
-export { db, ref, set, onValue, messaging, getToken, onMessage, signInWithPopup, signOut };
+export { db, ref, set, onValue, messaging, getToken, onMessage, signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword };
