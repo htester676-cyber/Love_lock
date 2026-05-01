@@ -112,4 +112,4 @@ export function onMusic(code, callback) {
   return onValue(ref(db, `rooms/${code}/music`), (snap) => callback(snap.val()));
 }
 
-export { db, ref, set, onValue, messaging, getToken, onMessage, signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword };
+export { db, ref, set, onValue, messaging, getToken, onMessage, signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, onDisconnect };

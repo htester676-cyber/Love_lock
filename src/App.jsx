@@ -4,7 +4,7 @@ import { MusicPlayer, Karaoke } from './Music';
 import { Chat } from './Chat';
 import { DrawingPad } from './DrawingPad';
 import Login from './Login';
-import { onRoomUsers, messaging, getToken, onMessage, db, ref, set } from './firebase';
+import { onRoomUsers, messaging, getToken, onMessage, db, ref, set, onDisconnect } from './firebase';
 
 const GAMES = [
   { id: "tod", icon: "🃏", name: "Truth or Dare", desc: "Spicy couples edition", wide: false },
@@ -29,7 +29,10 @@ const GAME_TITLES = {
 };
 
 export default function App() {
-  const [user, setUser] = useState(null); // { name, code, role, uid }
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('lovelock_user');
+    return saved ? JSON.parse(saved) : null;
+  }); // { name, code, role, uid }
   const [tab, setTab] = useState("games");
   const [activeGame, setActiveGame] = useState(null);
   const [partner, setPartner] = useState(null);
@@ -55,7 +58,14 @@ export default function App() {
     });
     return () => unsub();
   }, [user, partner, showToast]);
-
+  useEffect(() => {
+    if (user) {
+      // Re-establish presence on refresh
+      const nodeRef = ref(db, `rooms/${user.code}/users/${user.role}`);
+      set(nodeRef, user.name);
+      onDisconnect(nodeRef).remove();
+    }
+  }, [user]);
   useEffect(() => {
     if (user && user.uid && messaging) {
       const requestPushPermission = async () => {
@@ -84,8 +94,16 @@ export default function App() {
       : [partner || 'Partner', user.name]
   ) : ['You', 'Them'];
 
-  const handleLogin = (data) => setUser(data);
-  const handleLogout = () => { setUser(null); setPartner(null); setTab('games'); };
+  const handleLogin = (data) => {
+    setUser(data);
+    localStorage.setItem('lovelock_user', JSON.stringify(data));
+  };
+  const handleLogout = () => { 
+    setUser(null); 
+    setPartner(null); 
+    setTab('games'); 
+    localStorage.removeItem('lovelock_user');
+  };
 
   if (!user) return <Login onLogin={handleLogin} />;
 
