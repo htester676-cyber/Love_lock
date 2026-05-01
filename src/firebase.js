@@ -7,7 +7,9 @@
 // 5. Copy your config values below
 
 import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { getDatabase, ref, push, onValue, set, onDisconnect, remove, get } from 'firebase/database';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBCd-AkyiKxqH-JJ4GpcqqdvK1emA58uY0",
@@ -21,7 +23,16 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 const db = getDatabase(app);
+
+let messaging = null;
+try {
+  messaging = getMessaging(app);
+} catch (e) {
+  console.log("Firebase Messaging not supported", e);
+}
 
 // Generate a 6-digit room code
 export function generateRoomCode() {
@@ -101,4 +112,4 @@ export function onMusic(code, callback) {
   return onValue(ref(db, `rooms/${code}/music`), (snap) => callback(snap.val()));
 }
 
-export { db, ref, set, onValue };
+export { db, ref, set, onValue, messaging, getToken, onMessage, signInWithPopup, signOut };

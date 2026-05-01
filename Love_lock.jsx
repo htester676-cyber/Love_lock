@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { auth, googleProvider, signInWithPopup, signOut, messaging, getToken, onMessage, db, ref, set } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap');`;
 
@@ -505,58 +507,60 @@ const style = `
     transform: scale(1.05);
   }
 
-  /* SPIN BOTTLE */
-  .spin-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    padding: 10px 0;
+  /* NEVER HAVE I EVER */
+  .nhie-wrap {
+    text-align: center;
   }
-
-  .spin-wheel {
-    width: 200px; height: 200px;
-    position: relative;
-    cursor: pointer;
-  }
-
-  .spin-circle {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 2px solid rgba(240,96,144,0.3);
-    background: conic-gradient(
-      rgba(240,96,144,0.15) 0deg 45deg,
-      rgba(100,150,240,0.15) 45deg 90deg,
-      rgba(255,200,80,0.15) 90deg 135deg,
-      rgba(120,200,150,0.15) 135deg 180deg,
-      rgba(240,96,144,0.15) 180deg 225deg,
-      rgba(100,150,240,0.15) 225deg 270deg,
-      rgba(255,200,80,0.15) 270deg 315deg,
-      rgba(120,200,150,0.15) 315deg 360deg
-    );
+  .nhie-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(240,96,144,0.2);
+    border-radius: 20px;
+    padding: 30px 20px;
+    min-height: 150px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0s;
-    position: relative;
+    margin-bottom: 20px;
   }
-
-  .spin-needle {
-    position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 1.4rem;
+  .nhie-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-style: italic;
+    color: #fff;
   }
-
-  .spin-result {
+  /* TOAST & LOGIN */
+  .toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .toast {
+    background: rgba(240,96,144,0.9);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    animation: slideInRight 0.3s ease-out;
+    font-size: 0.9rem;
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .login-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
     text-align: center;
-    padding: 16px 20px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(240,96,144,0.2);
-    border-radius: 16px;
-    width: 100%;
+    z-index: 10;
+    position: relative;
   }
 
   /* DATE WHEEL */
@@ -747,9 +751,14 @@ const WYR = [
   { q: "Would you rather...", a: "Never argue again 🕊️", b: "Always make up quickly 💋" },
 ];
 
-const SPIN_DARES = [
-  "Kiss 💋", "Hug 🤗", "Compliment 💬", "Massage 💆", "Cook for me 🍳",
-  "Love note 💌", "Dance 💃", "Sing 🎵",
+const NEVER_HAVE_I_EVER = [
+  "Never have I ever pretended to be asleep to avoid talking to you.",
+  "Never have I ever secretly worn your clothes.",
+  "Never have I ever been jealous of one of your friends.",
+  "Never have I ever snooped through your phone.",
+  "Never have I ever forgotten an important anniversary.",
+  "Never have I ever lied about liking a gift you gave me.",
+  "Never have I ever imagined what our kids would look like.",
 ];
 
 const DATE_IDEAS = [
@@ -926,50 +935,22 @@ function MemoryGame() {
   );
 }
 
-function SpinBottle() {
-  const [spinning, setSpinning] = useState(false);
-  const [deg, setDeg] = useState(0);
-  const [result, setResult] = useState(null);
+function NeverHaveIEver() {
+  const [idx, setIdx] = useState(0);
+  const q = NEVER_HAVE_I_EVER[idx % NEVER_HAVE_I_EVER.length];
 
-  const spin = () => {
-    if (spinning) return;
-    setSpinning(true);
-    const extra = 1440 + Math.floor(Math.random() * 360);
-    const newDeg = deg + extra;
-    setDeg(newDeg);
-    const idx = Math.floor(((newDeg % 360) / 360) * SPIN_DARES.length);
-    setTimeout(() => {
-      setResult(SPIN_DARES[idx % SPIN_DARES.length]);
-      setSpinning(false);
-    }, 2500);
-  };
+  const next = () => { setIdx(i => i + 1); };
 
   return (
-    <div className="spin-wrap">
-      <div className="spin-wheel" onClick={spin}>
-        <div className="spin-needle">💘</div>
-        <div className="spin-circle" style={{ transform: `rotate(${deg}deg)`, transition: spinning ? "transform 2.5s cubic-bezier(0.17,0.67,0.3,1)" : "none" }}>
-          {SPIN_DARES.map((d, i) => (
-            <div key={i} style={{
-              position: "absolute",
-              transform: `rotate(${(i / SPIN_DARES.length) * 360}deg) translate(60px)`,
-              fontSize: "0.65rem",
-              color: "rgba(245,230,234,0.6)",
-              whiteSpace: "nowrap",
-            }}>{d}</div>
-          ))}
-          <div style={{ fontSize: "2rem" }}>🍾</div>
-        </div>
+    <div className="nhie-wrap">
+      <div className="nhie-card">
+        <p className="nhie-text">"{q}"</p>
       </div>
-      <button className="btn" onClick={spin} disabled={spinning}>
-        {spinning ? "Spinning... 🌀" : "Spin! 💫"}
-      </button>
-      {result && !spinning && (
-        <div className="spin-result">
-          <p style={{ color: "rgba(245,230,234,0.5)", fontSize: "0.75rem", marginBottom: 6 }}>Your challenge:</p>
-          <p style={{ fontSize: "1.2rem", color: "#fff", fontFamily: "Playfair Display, serif", fontStyle: "italic" }}>{result}</p>
-        </div>
-      )}
+      <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginBottom: "20px" }}>
+        <button className="btn" style={{ background: "rgba(100,200,120,0.2)", border: "1px solid rgba(100,200,120,0.5)", color: "#90e0a0" }} onClick={next}>I Have 🙋</button>
+        <button className="btn" style={{ background: "rgba(240,80,80,0.2)", border: "1px solid rgba(240,80,80,0.5)", color: "#f08080" }} onClick={next}>I Haven't 🙅</button>
+      </div>
+      <button className="btn btn-ghost" onClick={next}>Next Question →</button>
     </div>
   );
 }
@@ -1084,13 +1065,64 @@ export default function App() {
   const [tab, setTab] = useState("games");
   const [activeGame, setActiveGame] = useState(null);
   const [names, setNames] = useState(["You", "Them"]);
+  
+  const [user, setUser] = useState(null);
+  const [toasts, setToasts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const showToast = useCallback((msg) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, msg }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+  }, []);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setLoading(false);
+      if (u) {
+        showToast(`Welcome back, ${u.displayName || 'Love'}! 💕`);
+        requestPushPermission(u.uid);
+      }
+    });
+    return () => unsub();
+  }, [showToast]);
+
+  useEffect(() => {
+    if (messaging) {
+      const unsub = onMessage(messaging, (payload) => {
+        showToast(`💌 ${payload.notification.title}: ${payload.notification.body}`);
+      });
+      return () => unsub();
+    }
+  }, [showToast]);
+
+  const requestPushPermission = async (uid) => {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted' && messaging) {
+        const token = await getToken(messaging);
+        if (token) await set(ref(db, `users/${uid}/fcmToken`), token);
+      }
+    } catch (e) {
+      console.log('Push notification skipped:', e);
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      showToast("Login failed. Please try again.");
+    }
+  };
 
   const GAMES = [
     { id: "tod", icon: "🃏", name: "Truth or Dare", desc: "Spicy couples edition", wide: false },
     { id: "love", icon: "💘", name: "Love Meter", desc: "Calculate your vibe", wide: false },
     { id: "wyr", icon: "💬", name: "Would You Rather", desc: "Reveal your choices", wide: true },
     { id: "memo", icon: "🧠", name: "Memory Match", desc: "Find the pair", wide: false },
-    { id: "spin", icon: "🍾", name: "Spin the Bottle", desc: "Spin for a dare", wide: false },
+    { id: "nhie", icon: "🤭", name: "Never Have I Ever", desc: "Confess your secrets", wide: false },
     { id: "date", icon: "📅", name: "Date Ideas", desc: "Find something fun", wide: true },
     { id: "quiz", icon: "🎯", name: "Couple Quiz", desc: "How well do you know each other?", wide: false },
     { id: "confess", icon: "💌", name: "Confessions", desc: "Leave sweet notes", wide: false },
@@ -1101,7 +1133,7 @@ export default function App() {
     love: ["Love Meter 💘", "How strong is your bond?"],
     wyr: ["Would You Rather 💬", "Reveal your true choices"],
     memo: ["Memory Match 🧠", "Find all the pairs together"],
-    spin: ["Spin the Bottle 🍾", "Let fate decide!"],
+    nhie: ["Never Have I Ever 🤭", "Let's see what you've done"],
     date: ["Date Ideas 📅", "Inspiration for your next date"],
     quiz: ["Couple Quiz 🎯", "How well do you know each other?"],
     confess: ["Sweet Confessions 💌", "Drop a note for your love"],
@@ -1113,7 +1145,7 @@ export default function App() {
       case "love": return <LoveMeter />;
       case "wyr": return <WouldYouRather />;
       case "memo": return <MemoryGame />;
-      case "spin": return <SpinBottle />;
+      case "nhie": return <NeverHaveIEver />;
       case "date": return <DateIdeas />;
       case "quiz": return <CoupleQuiz names={names} />;
       case "confess": return <Confessions />;
@@ -1127,10 +1159,32 @@ export default function App() {
     duration: (8 + i * 1.1) + "s",
   }));
 
+  if (loading) return <div style={{color: 'white', textAlign: 'center', marginTop: '50px', fontFamily: 'DM Sans, sans-serif'}}>Loading our memories... 💖</div>;
+
+  if (!user) {
+    return (
+      <div className="app">
+        <style>{style}</style>
+        <div className="toast-container">
+          {toasts.map(t => <div key={t.id} className="toast">{t.msg}</div>)}
+        </div>
+        <div className="login-screen">
+          <div style={{ fontSize: "5rem", marginBottom: "20px" }}>💑</div>
+          <h1 className="header-title" style={{ fontSize: '3rem', marginBottom: '10px' }}>Love<span>Play</span></h1>
+          <p className="header-sub" style={{ marginBottom: '40px', fontSize: '0.9rem' }}>Sign in to save your memories and connect with your partner</p>
+          <button className="btn" onClick={handleLogin} style={{ maxWidth: '300px', fontSize: '1.1rem', padding: '16px' }}>Sign in with Google 🚀</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <style>{style}</style>
       <div className="app">
+        <div className="toast-container">
+          {toasts.map(t => <div key={t.id} className="toast">{t.msg}</div>)}
+        </div>
         <div className="hearts-bg">
           {floatHearts.map((h, i) => (
             <div key={i} className="float-heart" style={{
