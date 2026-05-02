@@ -44,26 +44,42 @@ export default function App() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   }, []);
 
-  // Listen for partner joining
+  // Listen for partner joining and handle disconnections
   useEffect(() => {
     if (!user) return;
     const unsub = onRoomUsers(user.code, (users) => {
-      if (user.role === 'host' && users.guest && partner !== users.guest) {
-        setPartner(users.guest);
-        showToast(`${users.guest} joined the room! 💕`);
-      }
-      if (user.role === 'guest' && users.host && partner !== users.host) {
-        setPartner(users.host);
+      const isHost = user.role === 'host' || !user.role; // Default to host if role is missing for some reason
+      
+      if (isHost) {
+        setPartner(prev => {
+          if (!prev && users.guest) showToast(`${users.guest} joined the room! 💕`);
+          return users.guest || null;
+        });
+      } else {
+        setPartner(prev => {
+          if (!prev && users.host) showToast(`${users.host} joined the room! 💕`);
+          return users.host || null;
+        });
       }
     });
     return () => unsub();
-  }, [user, partner, showToast]);
+  }, [user, showToast]);
+
   useEffect(() => {
     if (user) {
-      // Re-establish presence on refresh
-      const nodeRef = ref(db, `rooms/${user.code}/users/${user.role}`);
-      set(nodeRef, user.name);
-      onDisconnect(nodeRef).remove();
+      // Robustly re-establish presence on refresh or reconnect
+      const connectedRef = ref(db, '.info/connected');
+      const role = user.role || 'host';
+      const nodeRef = ref(db, `rooms/${user.code}/users/${role}`);
+      
+      const unsub = onValue(connectedRef, (snap) => {
+        if (snap.val() === true) {
+          onDisconnect(nodeRef).remove().then(() => {
+            set(nodeRef, user.name);
+          });
+        }
+      });
+      return () => unsub();
     }
   }, [user]);
   useEffect(() => {
